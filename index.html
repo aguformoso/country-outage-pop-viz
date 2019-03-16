@@ -56,29 +56,37 @@
                   var y = d3.scale.linear().domain([0,100]).range([0,height]);
                   var ynow = 0;
 	               data['isps'].forEach( function( isp ) {
+
+	                   let timeline = {};
+	                   for (const [d, count] of Object.entries(isp["timeline"])) {
+                           timeline[d] = count;
+                       }
+
                      var ystart = ynow;
                      var yend = ynow + isp['pct'];
-							if ( zebra ) {
-								var bg = paper.rect( 0, y(ystart), width, y( isp['pct'] ) );
-                        bg.attr('fill', '#ccc');
-                        bg.attr('stroke', '#ccc');
-							}
-							var isp_txt = paper.text( width/4, y( ynow + isp['pct']/2 ), isp['name'] + "("+ isp['asn']  +")" );
-							o = isp["outages"];
-							o.forEach( function( outage ) {
-								start = parseDate( outage[0] );
-								nd = parseDate( outage[1] );
-								// console.log( x(start), y(ystart), x(nd - start), y(yend - ystart) ); // this is your data
-								var r = paper.rect( x(start), y(ystart), x(nd) - x(start), y(yend - ystart) ); // this is your data
-                        if ( zebra ) {
-									r.attr("fill", "#d11");
-									r.attr("stroke", "#d11");
-                        } else {
-									r.attr("fill", "#f77");
-									r.attr("stroke", "#f77");
-								}
-								// r.hover( function(e) { console.log( this ); this.animate({opacity:0}, 800 ) }, function(e) {} );
-							});
+
+							paper.text( width/4, y( ynow + isp['pct']/2 ), isp['name'] + "("+ isp['asn']  +")" );
+
+                            const max = Math.max.apply(null, (Object.values(timeline)));
+                            for ([d, count] of Object.entries(timeline)) {
+                                const start = parseDate(d)
+                                let end = new Date(d)
+                                end = end.setHours(end.getHours()+1);  // 1-hour granularity
+                                const ratio = 1-count/max;
+                                paper.rect(
+                                    x(start), y(ystart), x(end) - x(start), y(yend - ystart)
+                                ).attr(
+                                    "fill", zebra ? "#d11" : "#f77"
+                                ).attr(
+                                    "stroke", zebra ? "#d11" : "#f77"
+                                ).attr(
+                                    "opacity", ratio
+                                ).hover(
+                                    () => console.log(start.toISOString(), ratio.toFixed(2)),  // TODO add tooltip
+                                    () => {}
+                                )
+                            }
+
                      ynow += isp['pct'];
 							zebra = !zebra;
 				         //console.log( zebra )

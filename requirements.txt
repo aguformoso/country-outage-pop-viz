@@ -1,0 +1,4 @@
+requests==2.21.0
+arrow==0.13.1
+pytricia==1.0.0
+tqdm==4.31.1
