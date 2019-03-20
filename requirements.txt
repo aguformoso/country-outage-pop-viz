@@ -1,3 +1,4 @@
+ipaddress==1.0.22
 requests==2.21.0
 arrow==0.13.1
 pytricia==1.0.0

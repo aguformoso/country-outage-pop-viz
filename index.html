@@ -65,7 +65,13 @@
 
 							paper.text( width/4, y( ynow + isp['pct']/2 ), isp['name'] + "("+ isp['asn']  +")" );
 
-                            const max = Math.max.apply(null, (Object.values(timeline)));
+							const sorted = Object.values(timeline).slice().sort();
+							const middle = Math.floor(sorted.length / 2);
+                            let max;
+                            if (sorted.length % 2 === 0)
+                                max = (sorted[middle - 1] + sorted[middle]) / 2;
+                            else
+                                max = sorted[middle];
                             for ([d, count] of Object.entries(timeline)) {
                                 const start = parseDate(d)
                                 let end = new Date(d)

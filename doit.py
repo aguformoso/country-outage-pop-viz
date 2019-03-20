@@ -7,6 +7,7 @@ import pytricia
 import datetime
 from datetime import timedelta
 from collections import defaultdict
+from ipaddress import IPv4Network, IPv6Network
 from tqdm import tqdm
 
 DEBUG=1
@@ -61,22 +62,25 @@ for thing in r.json():
 			py6[prefix_str] = prefix_timelines_
 
 
-	# Keep only those pfx with no children
+	# Keep only those pfx with no parent
 	for py in [py4, py6]:
 		for key in py.keys():
-			if py.children(key):
+			if py.parent(key):
 				del py[key]
 
 
 	timelines = []
 	for p in announced["data"]["prefixes"]:
 
-		if p["prefix"] not in py4.keys() and p["prefix"] not in py6.keys():
+		pfx = p["prefix"]
+		if pfx not in py4.keys() and pfx not in py6.keys():
 			continue
+
+		pfx = IPv4Network(pfx) if '.' in pfx else IPv6Network(pfx)
 
 		for t in p["timelines"]:
 			timelines.append(
-				(to_datetime(t["starttime"]), to_datetime(t["endtime"]))
+				(to_datetime(t["starttime"]), to_datetime(t["endtime"]), pfx.num_addresses)
 			)
 
 	_start = starttime  # shared start time
@@ -86,17 +90,17 @@ for thing in r.json():
 	seconds_____hours = (_end - _start).total_seconds() / 60.0 / 60.0 / hours
 	bar = tqdm(
 		total=seconds_____hours,
-		leave=False,
+		# leave=False,
 		desc="{name} (AS{asn})".format(name=name, asn=asn)
 	)
 	while _start < _end:
 		_window_end = _start + timedelta(hours=hours)
 
-		for t0, t1 in timelines:
+		for t0, t1, num_addresses in timelines:
 			if t1 <= _start or t0 >= _window_end:
 				timeline_count[_start.strftime(DATE_FMT)] += 0
 			else:
-				timeline_count[_start.strftime(DATE_FMT)] += 1
+				timeline_count[_start.strftime(DATE_FMT)] += num_addresses
 
 		bar.update(1)
 		_start = _window_end
